@@ -16,20 +16,23 @@
             --border: #2a2a2a; --shadow: rgba(0, 255, 136, 0.1);
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'DM Sans', sans-serif; background: var(--bg-primary); color: var(--text-primary); line-height: 1.6; }
+        body { font-family: 'DM Sans', sans-serif; background: var(--bg-primary); color: var(--text-primary); line-height: 1.6; overflow-x: hidden; }
         .header { position: sticky; top: 0; z-index: 100; background: rgba(10, 10, 10, 0.95); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border); padding: 1rem; }
         .header-content { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
         .logo { font-family: 'Orbitron', sans-serif; font-size: 1.2rem; background: linear-gradient(135deg, var(--accent) 0%, #00ddff 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .add-btn { background: var(--accent); color: var(--bg-primary); border: none; padding: 0.6rem 1rem; border-radius: 8px; font-weight: 700; cursor: pointer; }
+        .add-btn { background: var(--accent); color: var(--bg-primary); border: none; padding: 0.6rem 1rem; border-radius: 8px; font-weight: 700; cursor: pointer; transition: 0.3s; }
+        .add-btn:disabled { opacity: 0.5; cursor: not-allowed; }
         .settings-btn { background: transparent; border: 1px solid var(--border); color: var(--text-secondary); padding: 0.6rem; border-radius: 8px; cursor: pointer; }
         .container { max-width: 1200px; margin: 0 auto; padding: 1rem; }
         .exercises-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
-        .exercise-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 1rem; cursor: pointer; }
-        .card-tag { background: rgba(0, 255, 136, 0.1); color: var(--accent); padding: 0.2rem 0.5rem; border-radius: 6px; font-size: 0.7rem; }
+        .exercise-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; cursor: pointer; position: relative; transition: transform 0.2s; }
+        .exercise-card:active { transform: scale(0.98); }
+        .card-tag { background: rgba(0, 255, 136, 0.1); color: var(--accent); padding: 0.2rem 0.5rem; border-radius: 6px; font-size: 0.7rem; margin-right: 4px; display: inline-block; margin-top: 5px; }
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 1000; padding: 1rem; align-items: center; justify-content: center; }
         .modal.active { display: flex; }
         .modal-content { background: var(--bg-card); border: 1px solid var(--border); padding: 1.5rem; border-radius: 16px; width: 100%; max-width: 500px; }
-        .form-input { width: 100%; background: var(--bg-secondary); border: 1px solid var(--border); padding: 0.8rem; border-radius: 8px; color: white; margin: 0.5rem 0 1rem; }
+        .form-input { width: 100%; background: var(--bg-secondary); border: 1px solid var(--border); padding: 0.8rem; border-radius: 8px; color: white; margin: 0.5rem 0 1rem; font-family: inherit; }
+        .delete-btn { color: #ff4444; background: none; border: none; font-size: 0.8rem; cursor: pointer; margin-top: 15px; display: block; width: fit-content; }
     </style>
 </head>
 <body>
@@ -37,7 +40,7 @@
         <div class="header-content">
             <div class="logo">💪 FITLIBRARY</div>
             <div style="display: flex; gap: 0.5rem;">
-                <button class="settings-btn" onclick="openModal('settingsModal')">⚙️</button>
+                <button class="settings-btn" title="Configuración" onclick="openModal('settingsModal')">⚙️</button>
                 <button class="add-btn" onclick="openModal('addModal')">+ Añadir</button>
             </div>
         </div>
@@ -50,8 +53,9 @@
     <div class="modal" id="addModal">
         <div class="modal-content">
             <h3>Nuevo Ejercicio</h3>
-            <input type="url" id="instaUrl" class="form-input" placeholder="URL de Instagram">
-            <button class="add-btn" style="width: 100%" onclick="handleAdd()">Analizar con Gemini</button>
+            <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Pega el enlace de Instagram o comparte desde la app.</p>
+            <input type="url" id="instaUrl" class="form-input" placeholder="https://www.instagram.com/p/...">
+            <button class="add-btn" style="width: 100%" id="analyzeBtn" onclick="handleAdd()">Analizar con Gemini</button>
             <button class="settings-btn" style="width: 100%; margin-top: 0.5rem;" onclick="closeModal('addModal')">Cerrar</button>
         </div>
     </div>
@@ -59,8 +63,9 @@
     <div class="modal" id="settingsModal">
         <div class="modal-content">
             <h3>Configuración</h3>
-            <label style="font-size: 0.8rem;">Gemini API Key:</label>
-            <input type="password" id="apiKeyInput" class="form-input" placeholder="AIza...">
+            <label style="font-size: 0.8rem; margin-top: 1rem; display: block;">Google Gemini API Key:</label>
+            <input type="password" id="apiKeyInput" class="form-input" placeholder="AIzaSy...">
+            <p style="font-size: 0.7rem; color: var(--text-secondary); margin-bottom: 1rem;">La clave se guarda solo en este dispositivo.</p>
             <button class="add-btn" style="width: 100%" onclick="saveApiKey()">Guardar Clave</button>
             <button class="settings-btn" style="width: 100%; margin-top: 0.5rem;" onclick="closeModal('settingsModal')">Cerrar</button>
         </div>
@@ -78,63 +83,121 @@
         function closeModal(id) { document.getElementById(id).classList.remove('active'); }
 
         async function saveApiKey() {
-            const key = document.getElementById('apiKeyInput').value;
-            storage.save('gemini_key', key);
-            alert('Clave guardada localmente');
-            closeModal('settingsModal');
+            const key = document.getElementById('apiKeyInput').value.trim();
+            if(key) {
+                storage.save('gemini_key', key);
+                alert('✅ Clave guardada correctamente.');
+                closeModal('settingsModal');
+            } else {
+                alert('⚠️ Por favor ingresa una clave válida.');
+            }
         }
 
         async function handleAdd() {
-            const url = document.getElementById('instaUrl').value;
+            const urlInput = document.getElementById('instaUrl');
+            const url = urlInput.value.trim();
             const key = storage.get('gemini_key');
-            if(!key) return alert('Configura tu API Key primero en el ⚙️');
             
-            const btn = document.querySelector('#addModal .add-btn');
-            btn.textContent = 'Analizando...';
+            if(!key) return alert('⚠️ Error: Configura tu API Key primero en el icono ⚙️.');
+            if(!url) return alert('⚠️ Error: Pega una URL de Instagram.');
+            
+            const btn = document.getElementById('analyzeBtn');
+            btn.textContent = 'Comunicando con Gemini...';
             btn.disabled = true;
 
             try {
-                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
-                        contents: [{ parts: [{ text: `Analiza este ejercicio de Instagram: ${url}. Responde solo JSON: {"ejercicio":"","grupo":"","equipo":"","nivel":""}` }]}]
+                        contents: [{ parts: [{ text: `Analiza este video de ejercicio de Instagram: ${url}. Extrae la información y responde ÚNICAMENTE con un objeto JSON (sin bloques de código markdown) que contenga: ejercicio (nombre corto), grupo (músculo), equipo (mancuernas, barra, etc), nivel (principiante, intermedio, avanzado).` }]}]
                     })
                 });
-                const data = await res.json();
-                const text = data.candidates[0].content.parts[0].text.replace(/```json/g, '').replace(/```/g, '').trim();
-                const exercise = JSON.parse(text);
+
+                if (!response.ok) {
+                    const errData = await response.json();
+                    if (response.status === 400) throw new Error("API Key inválida o mal copiada.");
+                    if (response.status === 429) throw new Error("Límite de peticiones alcanzado. Espera un minuto.");
+                    throw new Error(errData.error?.message || "Error en la conexión con Google.");
+                }
+                
+                const data = await response.json();
+                const rawText = data.candidates[0].content.parts[0].text;
+                
+                // Limpieza robusta para encontrar el JSON
+                const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+                if (!jsonMatch) throw new Error("La IA no devolvió un formato compatible. Intenta con otro video.");
+                
+                const exercise = JSON.parse(jsonMatch[0]);
                 exercise.url = url;
                 exercise.id = Date.now();
                 
                 exercises.unshift(exercise);
                 storage.save('exercises', exercises);
                 render();
+                urlInput.value = '';
                 closeModal('addModal');
+                alert('✅ Ejercicio analizado y guardado.');
             } catch (e) {
-                alert('Error analizando el video');
+                console.error(e);
+                alert('❌ DETALLE DEL ERROR: ' + e.message);
             } finally {
                 btn.textContent = 'Analizar con Gemini';
                 btn.disabled = false;
             }
         }
 
+        function deleteExercise(id) {
+            if(confirm('¿Eliminar este ejercicio de tu biblioteca?')) {
+                exercises = exercises.filter(e => e.id !== id);
+                storage.save('exercises', exercises);
+                render();
+            }
+        }
+
         function render() {
             const grid = document.getElementById('exercisesGrid');
+            if(exercises.length === 0) {
+                grid.innerHTML = '<div style="text-align:center; color:gray; grid-column:1/-1; padding:3rem;">No hay ejercicios. ¡Añade el primero!</div>';
+                return;
+            }
             grid.innerHTML = exercises.map(ex => `
-                <div class="exercise-card" onclick="window.open('${ex.url}', '_blank')">
-                    <h4>${ex.ejercicio}</h4>
-                    <p style="font-size: 0.8rem; color: #a0a0a0;">${ex.grupo}</p>
-                    <div style="margin-top: 0.5rem;">
-                        <span class="card-tag">${ex.equipo}</span>
-                        <span class="card-tag">${ex.nivel}</span>
+                <div class="exercise-card">
+                    <div onclick="window.open('${ex.url}', '_blank')">
+                        <h4 style="margin-bottom:0.2rem;">${ex.ejercicio || 'Sin título'}</h4>
+                        <p style="font-size: 0.8rem; color: var(--text-secondary);">${ex.grupo || 'General'}</p>
+                        <div style="margin-top: 0.5rem;">
+                            <span class="card-tag">${ex.equipo || 'Peso Corporal'}</span>
+                            <span class="card-tag">${ex.nivel || 'Todos los niveles'}</span>
+                        </div>
                     </div>
+                    <button class="delete-btn" onclick="deleteExercise(${ex.id})">🗑️ Eliminar</button>
                 </div>
             `).join('');
         }
 
-        render();
-        if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+        // Web Share Target: Capturar link compartido
+        window.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            const sharedUrl = params.get('url') || params.get('text');
+            if (sharedUrl) {
+                const urlMatch = sharedUrl.match(/https?:\/\/(www\.)?instagram\.com\/[^\s]+/);
+                if (urlMatch) {
+                    openModal('addModal');
+                    document.getElementById('instaUrl').value = urlMatch[0];
+                }
+            }
+            
+            // Cargar API key en el input si existe
+            const savedKey = storage.get('gemini_key');
+            if(savedKey) document.getElementById('apiKeyInput').value = savedKey;
+            
+            render();
+        });
+
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').then(() => console.log("SW registrado"));
+        }
     </script>
 </body>
 </html>
