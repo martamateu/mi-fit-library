@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FitLibrary - Tu Biblioteca</title>
+    <meta name="theme-color" content="#0a0a0a">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>💪</text></svg>">
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=DM+Sans:wght@400;500;700&display=swap');
+        :root {
+            --bg-primary: #0a0a0a; --bg-secondary: #141414; --bg-card: #1a1a1a;
+            --accent: #00ff88; --text-primary: #ffffff; --text-secondary: #a0a0a0;
+            --border: #2a2a2a; --shadow: rgba(0, 255, 136, 0.1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'DM Sans', sans-serif; background: var(--bg-primary); color: var(--text-primary); line-height: 1.6; }
+        .header { position: sticky; top: 0; z-index: 100; background: rgba(10, 10, 10, 0.95); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border); padding: 1rem; }
+        .header-content { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-family: 'Orbitron', sans-serif; font-size: 1.2rem; background: linear-gradient(135deg, var(--accent) 0%, #00ddff 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .add-btn { background: var(--accent); color: var(--bg-primary); border: none; padding: 0.6rem 1rem; border-radius: 8px; font-weight: 700; cursor: pointer; }
+        .settings-btn { background: transparent; border: 1px solid var(--border); color: var(--text-secondary); padding: 0.6rem; border-radius: 8px; cursor: pointer; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 1rem; }
+        .exercises-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
+        .exercise-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 1rem; cursor: pointer; }
+        .card-tag { background: rgba(0, 255, 136, 0.1); color: var(--accent); padding: 0.2rem 0.5rem; border-radius: 6px; font-size: 0.7rem; }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 1000; padding: 1rem; align-items: center; justify-content: center; }
+        .modal.active { display: flex; }
+        .modal-content { background: var(--bg-card); border: 1px solid var(--border); padding: 1.5rem; border-radius: 16px; width: 100%; max-width: 500px; }
+        .form-input { width: 100%; background: var(--bg-secondary); border: 1px solid var(--border); padding: 0.8rem; border-radius: 8px; color: white; margin: 0.5rem 0 1rem; }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">💪 FITLIBRARY</div>
+            <div style="display: flex; gap: 0.5rem;">
+                <button class="settings-btn" onclick="openModal('settingsModal')">⚙️</button>
+                <button class="add-btn" onclick="openModal('addModal')">+ Añadir</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="exercises-grid" id="exercisesGrid"></div>
+    </main>
+
+    <div class="modal" id="addModal">
+        <div class="modal-content">
+            <h3>Nuevo Ejercicio</h3>
+            <input type="url" id="instaUrl" class="form-input" placeholder="URL de Instagram">
+            <button class="add-btn" style="width: 100%" onclick="handleAdd()">Analizar con Gemini</button>
+            <button class="settings-btn" style="width: 100%; margin-top: 0.5rem;" onclick="closeModal('addModal')">Cerrar</button>
+        </div>
+    </div>
+
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <h3>Configuración</h3>
+            <label style="font-size: 0.8rem;">Gemini API Key:</label>
+            <input type="password" id="apiKeyInput" class="form-input" placeholder="AIza...">
+            <button class="add-btn" style="width: 100%" onclick="saveApiKey()">Guardar Clave</button>
+            <button class="settings-btn" style="width: 100%; margin-top: 0.5rem;" onclick="closeModal('settingsModal')">Cerrar</button>
+        </div>
+    </div>
+
+    <script>
+        const storage = {
+            save: (key, val) => localStorage.setItem(key, JSON.stringify(val)),
+            get: (key) => JSON.parse(localStorage.getItem(key))
+        };
+
+        let exercises = storage.get('exercises') || [];
+
+        function openModal(id) { document.getElementById(id).classList.add('active'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+        async function saveApiKey() {
+            const key = document.getElementById('apiKeyInput').value;
+            storage.save('gemini_key', key);
+            alert('Clave guardada localmente');
+            closeModal('settingsModal');
+        }
+
+        async function handleAdd() {
+            const url = document.getElementById('instaUrl').value;
+            const key = storage.get('gemini_key');
+            if(!key) return alert('Configura tu API Key primero en el ⚙️');
+            
+            const btn = document.querySelector('#addModal .add-btn');
+            btn.textContent = 'Analizando...';
+            btn.disabled = true;
+
+            try {
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: `Analiza este ejercicio de Instagram: ${url}. Responde solo JSON: {"ejercicio":"","grupo":"","equipo":"","nivel":""}` }]}]
+                    })
+                });
+                const data = await res.json();
+                const text = data.candidates[0].content.parts[0].text.replace(/```json/g, '').replace(/```/g, '').trim();
+                const exercise = JSON.parse(text);
+                exercise.url = url;
+                exercise.id = Date.now();
+                
+                exercises.unshift(exercise);
+                storage.save('exercises', exercises);
+                render();
+                closeModal('addModal');
+            } catch (e) {
+                alert('Error analizando el video');
+            } finally {
+                btn.textContent = 'Analizar con Gemini';
+                btn.disabled = false;
+            }
+        }
+
+        function render() {
+            const grid = document.getElementById('exercisesGrid');
+            grid.innerHTML = exercises.map(ex => `
+                <div class="exercise-card" onclick="window.open('${ex.url}', '_blank')">
+                    <h4>${ex.ejercicio}</h4>
+                    <p style="font-size: 0.8rem; color: #a0a0a0;">${ex.grupo}</p>
+                    <div style="margin-top: 0.5rem;">
+                        <span class="card-tag">${ex.equipo}</span>
+                        <span class="card-tag">${ex.nivel}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        render();
+        if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+    </script>
+</body>
+</html>
