@@ -350,7 +350,7 @@ function renderPlans() {
 }
 
 // --- Generate plan with AI ---
-async function generatePlan() {
+async function generatePlan(event) {
     if (exercises.length < 2) {
         return showToast('⚠️ Necesitas al menos 2 estiramientos para generar un plan.');
     }

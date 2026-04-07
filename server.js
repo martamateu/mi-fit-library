@@ -220,8 +220,16 @@ El campo ejercicio_index es el índice (base 0) del ejercicio en la lista propor
   }
 });
 
+// Rate limiting for static file fallback
+const staticLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 120,
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
 // Fallback to index.html for SPA-like routing
-app.get('*', (req, res) => {
+app.get('*', staticLimiter, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
