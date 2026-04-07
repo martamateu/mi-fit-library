@@ -34,12 +34,12 @@ const apiLimiter = rateLimit({
 // --- Serve static files from /public ---
 app.use(express.static(path.join(__dirname, 'public')));
 
-// --- API proxy for Claude ---
+// --- API proxy for Gemini ---
 app.post('/api/analyze', apiLimiter, async (req, res) => {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY;
 
   if (!apiKey) {
-    return res.status(500).json({ error: 'El servidor no tiene configurada la clave de API de Anthropic. Configura la variable ANTHROPIC_API_KEY.' });
+    return res.status(500).json({ error: 'El servidor no tiene configurada la clave de API de Gemini. Configura la variable GEMINI_API_KEY.' });
   }
 
   const { url } = req.body;
@@ -76,36 +76,34 @@ Responde ÚNICAMENTE con un objeto JSON válido (sin bloques markdown, sin texto
 }`;
 
   try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01'
+        'x-goog-api-key': apiKey
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1024,
-        messages: [
-          { role: 'user', content: prompt }
-        ]
+        contents: [{ parts: [{ text: prompt }] }]
       })
     });
 
     if (!response.ok) {
       const errData = await response.json().catch(() => ({}));
       const status = response.status;
-      if (status === 401) {
-        return res.status(500).json({ error: 'Clave de API de Anthropic inválida. Contacta al administrador.' });
+      if (status === 401 || status === 403 || (status === 400 && errData.error?.status === 'INVALID_ARGUMENT')) {
+        return res.status(500).json({ error: 'Clave de API de Gemini inválida. Contacta al administrador.' });
       }
       if (status === 429) {
         return res.status(429).json({ error: 'Límite de peticiones de la API alcanzado. Espera un momento.' });
       }
-      return res.status(502).json({ error: errData.error?.message || 'Error al comunicarse con Claude.' });
+      return res.status(502).json({ error: errData.error?.message || 'Error al comunicarse con Gemini.' });
     }
 
     const data = await response.json();
-    const rawText = data.content[0].text;
+    const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!rawText) {
+      return res.status(502).json({ error: 'La IA no devolvió un formato compatible. Intenta con otro video.' });
+    }
 
     // Extract JSON from response
     const jsonMatch = rawText.match(/\{[\s\S]*\}/);
@@ -134,7 +132,7 @@ Responde ÚNICAMENTE con un objeto JSON válido (sin bloques markdown, sin texto
 
 // --- API to suggest a plan based on exercises ---
 app.post('/api/suggest-plan', apiLimiter, async (req, res) => {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY;
 
   if (!apiKey) {
     return res.status(500).json({ error: 'El servidor no tiene configurada la clave de API.' });
@@ -183,29 +181,31 @@ Responde ÚNICAMENTE con un objeto JSON válido (sin markdown, sin texto extra):
 El campo ejercicio_index es el índice (base 0) del ejercicio en la lista proporcionada.`;
 
   try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01'
+        'x-goog-api-key': apiKey
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 2048,
-        messages: [
-          { role: 'user', content: prompt }
-        ]
+        contents: [{ parts: [{ text: prompt }] }]
       })
     });
 
     if (!response.ok) {
       const errData = await response.json().catch(() => ({}));
-      return res.status(502).json({ error: errData.error?.message || 'Error al comunicarse con Claude.' });
+      const status = response.status;
+      if (status === 401 || status === 403) {
+        return res.status(500).json({ error: 'Clave de API de Gemini inválida. Contacta al administrador.' });
+      }
+      return res.status(502).json({ error: errData.error?.message || 'Error al comunicarse con Gemini.' });
     }
 
     const data = await response.json();
-    const rawText = data.content[0].text;
+    const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!rawText) {
+      return res.status(502).json({ error: 'La IA no devolvió un formato compatible.' });
+    }
 
     const jsonMatch = rawText.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
@@ -235,7 +235,7 @@ app.get('*', staticLimiter, (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`🏋️ StretchLibrary server running on http://localhost:${PORT}`);
-  if (!process.env.ANTHROPIC_API_KEY) {
-    console.warn('⚠️  ANTHROPIC_API_KEY no está configurada. La funcionalidad de IA no estará disponible.');
+  if (!process.env.GEMINI_API_KEY) {
+    console.warn('⚠️  GEMINI_API_KEY no está configurada. La funcionalidad de IA no estará disponible.');
   }
 });
