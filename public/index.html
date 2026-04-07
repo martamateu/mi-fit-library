@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StretchLibrary - Estiramientos y Planes</title>
+    <meta name="theme-color" content="#0a0a0a">
+    <meta name="description" content="Guarda, organiza y comparte videos de estiramientos por categorías. Crea planes de estiramientos con IA.">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🧘</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo" onclick="showView('home')">🧘 STRETCHLIB</div>
+            <nav class="nav-tabs">
+                <button class="nav-tab active" data-view="home" onclick="showView('home')">📚 Biblioteca</button>
+                <button class="nav-tab" data-view="plans" onclick="showView('plans')">📋 Planes</button>
+            </nav>
+            <div class="header-actions">
+                <button class="add-btn" onclick="openModal('addModal')">+ Añadir</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- HOME VIEW -->
+        <div id="homeView" class="view active">
+            <!-- Category filter -->
+            <div class="category-bar" id="categoryBar">
+                <button class="cat-chip active" data-cat="all" onclick="filterCategory('all')">Todos</button>
+                <button class="cat-chip" data-cat="cuello" onclick="filterCategory('cuello')">🦒 Cuello</button>
+                <button class="cat-chip" data-cat="hombros" onclick="filterCategory('hombros')">💪 Hombros</button>
+                <button class="cat-chip" data-cat="espalda_superior" onclick="filterCategory('espalda_superior')">🔝 Espalda Alta</button>
+                <button class="cat-chip" data-cat="espalda_baja" onclick="filterCategory('espalda_baja')">🔙 Espalda Baja</button>
+                <button class="cat-chip" data-cat="pecho" onclick="filterCategory('pecho')">🫁 Pecho</button>
+                <button class="cat-chip" data-cat="brazos" onclick="filterCategory('brazos')">💪 Brazos</button>
+                <button class="cat-chip" data-cat="caderas" onclick="filterCategory('caderas')">🦴 Caderas</button>
+                <button class="cat-chip" data-cat="piernas" onclick="filterCategory('piernas')">🦵 Piernas</button>
+                <button class="cat-chip" data-cat="tobillos_pies" onclick="filterCategory('tobillos_pies')">🦶 Tobillos/Pies</button>
+                <button class="cat-chip" data-cat="full_body" onclick="filterCategory('full_body')">🧘 Full Body</button>
+            </div>
+
+            <!-- Search -->
+            <div class="search-bar">
+                <input type="text" id="searchInput" class="form-input" placeholder="🔍 Buscar estiramientos..." oninput="renderExercises()">
+            </div>
+
+            <!-- Stats -->
+            <div class="stats-bar" id="statsBar"></div>
+
+            <!-- Grid -->
+            <div class="exercises-grid" id="exercisesGrid"></div>
+        </div>
+
+        <!-- PLANS VIEW -->
+        <div id="plansView" class="view">
+            <div class="plans-header">
+                <h2>📋 Mis Planes de Estiramientos</h2>
+                <button class="add-btn" onclick="generatePlan(event)">✨ Generar Plan con IA</button>
+            </div>
+            <div class="plans-grid" id="plansGrid"></div>
+        </div>
+    </main>
+
+    <!-- ADD EXERCISE MODAL -->
+    <div class="modal" id="addModal">
+        <div class="modal-content">
+            <h3>🧘 Nuevo Estiramiento</h3>
+            <p class="modal-subtitle">Pega el enlace del video (Instagram, YouTube, TikTok...) o comparte desde la app.</p>
+            <input type="url" id="videoUrl" class="form-input" placeholder="https://www.instagram.com/p/... o cualquier URL de video">
+            <button class="add-btn full-width" id="analyzeBtn" onclick="handleAnalyze()">🤖 Analizar con Claude</button>
+            <div class="divider">o añade manualmente</div>
+            <input type="text" id="manualName" class="form-input" placeholder="Nombre del estiramiento">
+            <select id="manualCategory" class="form-input">
+                <option value="">Selecciona categoría...</option>
+                <option value="cuello">🦒 Cuello</option>
+                <option value="hombros">💪 Hombros</option>
+                <option value="espalda_superior">🔝 Espalda Superior</option>
+                <option value="espalda_baja">🔙 Espalda Baja</option>
+                <option value="pecho">🫁 Pecho</option>
+                <option value="brazos">💪 Brazos</option>
+                <option value="caderas">🦴 Caderas</option>
+                <option value="piernas">🦵 Piernas</option>
+                <option value="tobillos_pies">🦶 Tobillos/Pies</option>
+                <option value="full_body">🧘 Full Body</option>
+            </select>
+            <select id="manualLevel" class="form-input">
+                <option value="">Selecciona nivel...</option>
+                <option value="principiante">Principiante</option>
+                <option value="intermedio">Intermedio</option>
+                <option value="avanzado">Avanzado</option>
+            </select>
+            <input type="url" id="manualUrl" class="form-input" placeholder="URL del video (opcional)">
+            <button class="secondary-btn full-width" onclick="handleManualAdd()">📝 Guardar Manualmente</button>
+            <button class="close-btn full-width" onclick="closeModal('addModal')">Cerrar</button>
+        </div>
+    </div>
+
+    <!-- EXERCISE DETAIL MODAL -->
+    <div class="modal" id="detailModal">
+        <div class="modal-content">
+            <div id="detailContent"></div>
+            <button class="close-btn full-width" onclick="closeModal('detailModal')">Cerrar</button>
+        </div>
+    </div>
+
+    <!-- PLAN DETAIL MODAL -->
+    <div class="modal" id="planDetailModal">
+        <div class="modal-content modal-large">
+            <div id="planDetailContent"></div>
+            <button class="close-btn full-width" onclick="closeModal('planDetailModal')">Cerrar</button>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
