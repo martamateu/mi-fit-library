@@ -207,7 +207,7 @@ function showExerciseDetail(id) {
     openModal('detailModal');
 }
 
-// --- Analyze with Claude (via secure backend proxy) ---
+// --- Analyze with Gemini (via secure backend proxy) ---
 async function handleAnalyze() {
     const urlInput = document.getElementById('videoUrl');
     const url = urlInput.value.trim();
@@ -215,7 +215,7 @@ async function handleAnalyze() {
     if (!url) return showToast('⚠️ Pega una URL de video.');
 
     const btn = document.getElementById('analyzeBtn');
-    btn.innerHTML = '<span class="spinner"></span> Analizando con Claude...';
+    btn.innerHTML = '<span class="spinner"></span> Analizando con Gemini...';
     btn.disabled = true;
 
     try {
@@ -245,7 +245,7 @@ async function handleAnalyze() {
     } catch (e) {
         showToast('❌ ' + e.message);
     } finally {
-        btn.innerHTML = '🤖 Analizar con Claude';
+        btn.innerHTML = '🤖 Analizar con Gemini';
         btn.disabled = false;
     }
 }

@@ -1,11 +1,11 @@
 # 🧘 StretchLibrary
 
-**App de biblioteca de estiramientos con IA** — Guarda, organiza y comparte videos de estiramientos por categorías. Crea planes de estiramientos personalizados con Claude AI.
+**App de biblioteca de estiramientos con IA** — Guarda, organiza y comparte videos de estiramientos por categorías. Crea planes de estiramientos personalizados con Gemini AI.
 
 ## ✨ Características
 
 - **📚 Biblioteca de estiramientos** — Guarda videos de Instagram, YouTube, TikTok o cualquier URL
-- **🤖 Análisis con Claude AI** — Analiza automáticamente los videos y extrae categoría, nivel, músculos, etc.
+- **🤖 Análisis con Gemini AI** — Analiza automáticamente los videos y extrae categoría, nivel, músculos, etc.
 - **📂 Categorías** — Organiza por: cuello, hombros, espalda, pecho, brazos, caderas, piernas, tobillos, full body
 - **📋 Planes de estiramientos** — Genera planes inteligentes con IA basados en tus estiramientos guardados
 - **📤 Compartir** — Comparte estiramientos y planes con amigos (Web Share API)
@@ -19,7 +19,7 @@
 ### Requisitos
 
 - [Node.js](https://nodejs.org/) 18 o superior
-- Clave de API de [Anthropic](https://console.anthropic.com/)
+- Clave de API de [Google AI Studio](https://aistudio.google.com/app/apikey) (gratuita)
 
 ### Instalación
 
@@ -33,7 +33,7 @@ npm install
 
 # Configurar la clave de API
 cp .env.example .env
-# Edita .env y añade tu ANTHROPIC_API_KEY
+# Edita .env y añade tu GEMINI_API_KEY
 
 # Iniciar el servidor
 npm start
@@ -45,13 +45,13 @@ La app estará disponible en `http://localhost:3000`.
 
 | Variable | Descripción | Requerida |
 |----------|-------------|-----------|
-| `ANTHROPIC_API_KEY` | Clave de API de Anthropic (Claude) | Sí |
+| `GEMINI_API_KEY` | Clave de API de Google Gemini (gratuita) | Sí |
 | `PORT` | Puerto del servidor (por defecto: 3000) | No |
 
 ## 🏗️ Arquitectura
 
 ```
-├── server.js           # Backend Express con proxy seguro para Claude API
+├── server.js           # Backend Express con proxy seguro para Gemini API
 ├── package.json        # Dependencias del proyecto
 ├── .env.example        # Plantilla de variables de entorno
 ├── .gitignore          # Archivos ignorados por git
@@ -65,9 +65,9 @@ La app estará disponible en `http://localhost:3000`.
 
 ### Seguridad de la API
 
-- La clave de API de Anthropic se almacena **solo en el servidor** como variable de entorno
+- La clave de API de Gemini se almacena **solo en el servidor** como variable de entorno
 - **Nunca se expone al navegador** del usuario
-- El servidor actúa como proxy seguro entre el cliente y la API de Claude
+- El servidor actúa como proxy seguro entre el cliente y la API de Gemini
 - Rate limiting: máximo 20 peticiones por minuto por IP
 - Helmet.js para cabeceras de seguridad HTTP
 - Validación de entradas en el servidor
@@ -85,6 +85,6 @@ La app estará disponible en `http://localhost:3000`.
 
 - **Frontend**: Vanilla JS, CSS3, HTML5
 - **Backend**: Node.js, Express
-- **IA**: Claude (Anthropic API)
+- **IA**: Gemini 2.0 Flash (Google AI)
 - **Seguridad**: Helmet, express-rate-limit
 - **PWA**: Service Worker, Web Share API, Web Share Target
