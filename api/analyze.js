@@ -19,35 +19,19 @@ module.exports = async (req, res) => {
     return res.status(400).json({ error: 'URL no proporcionada o inválida.' });
   }
 
-  // Validate URL format (allow Instagram, YouTube, TikTok, and general URLs)
   const urlPattern = /^https?:\/\/.+/i;
   if (!urlPattern.test(url)) {
     return res.status(400).json({ error: 'Formato de URL no válido.' });
   }
 
-  // Limit URL length to prevent abuse
   if (url.length > 2048) {
     return res.status(400).json({ error: 'URL demasiado larga.' });
   }
 
-  const prompt = `Analiza este video de estiramiento/ejercicio: ${url}
-
-Basándote en la URL y el contexto, extrae información sobre el estiramiento mostrado.
-Responde ÚNICAMENTE con un objeto JSON válido (sin bloques markdown, sin texto extra) con estos campos:
-
-{
-  "nombre": "nombre descriptivo del estiramiento",
-  "categoria": "una de: cuello, hombros, espalda_superior, espalda_baja, pecho, brazos, caderas, piernas, tobillos_pies, full_body",
-  "duracion": "estimación en minutos (número)",
-  "nivel": "principiante, intermedio o avanzado",
-  "musculos": ["lista de músculos principales trabajados"],
-  "descripcion": "breve descripción del estiramiento en 1-2 frases",
-  "beneficios": "principales beneficios del estiramiento",
-  "tags": ["etiquetas relevantes como: mañana, oficina, post-entreno, relajación, movilidad, flexibilidad"]
-}`;
+  const prompt = `Analiza este video de estiramiento/ejercicio: ${url}\n\nBasándote en la URL y el contexto, extrae información sobre el estiramiento mostrado.\nResponde ÚNICAMENTE con un objeto JSON válido (sin bloques markdown, sin texto extra) con estos campos:\n\n{\n  "nombre": "nombre descriptivo del estiramiento",\n  "categoria": "una de: cuello, hombros, espalda_superior, espalda_baja, pecho, brazos, caderas, piernas, tobillos_pies, full_body",\n  "duracion": "estimación en minutos (número)",\n  "nivel": "principiante, intermedio o avanzado",\n  "musculos": ["lista de músculos principales trabajados"],\n  "descripcion": "breve descripción del estiramiento en 1-2 frases",\n  "beneficios": "principales beneficios del estiramiento",\n  "tags": ["etiquetas relevantes como: mañana, oficina, post-entreno, relajación, movilidad, flexibilidad"]\n};`;
 
   try {
-    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent', {
+    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -76,7 +60,6 @@ Responde ÚNICAMENTE con un objeto JSON válido (sin bloques markdown, sin texto
       return res.status(502).json({ error: 'La IA no devolvió un formato compatible. Intenta con otro video.' });
     }
 
-    // Extract JSON from response
     const jsonMatch = rawText.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       return res.status(502).json({ error: 'La IA no devolvió un formato compatible. Intenta con otro video.' });
@@ -84,7 +67,6 @@ Responde ÚNICAMENTE con un objeto JSON válido (sin bloques markdown, sin texto
 
     const exerciseData = JSON.parse(jsonMatch[0]);
 
-    // Validate required fields
     const validCategories = [
       'cuello', 'hombros', 'espalda_superior', 'espalda_baja',
       'pecho', 'brazos', 'caderas', 'piernas', 'tobillos_pies', 'full_body'
