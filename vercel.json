@@ -1,7 +1,1 @@
-{
-  "version": 2,
-  "outputDirectory": "public",
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
-  ]
-}
+{"outputDirectory": "public","rewrites": [{"source": "/(.*)", "destination": "/index.html"}]}
