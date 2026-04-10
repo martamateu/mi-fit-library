@@ -31,7 +31,7 @@ module.exports = async (req, res) => {
   const prompt = `Analiza este video de estiramiento/ejercicio: ${url}\n\nBasándote en la URL y el contexto, extrae información sobre el estiramiento mostrado.\nResponde ÚNICAMENTE con un objeto JSON válido (sin bloques markdown, sin texto extra) con estos campos:\n\n{\n  "nombre": "nombre descriptivo del estiramiento",\n  "categoria": "una de: cuello, hombros, espalda_superior, espalda_baja, pecho, brazos, caderas, piernas, tobillos_pies, full_body",\n  "duracion": "estimación en minutos (número)",\n  "nivel": "principiante, intermedio o avanzado",\n  "musculos": ["lista de músculos principales trabajados"],\n  "descripcion": "breve descripción del estiramiento en 1-2 frases",\n  "beneficios": "principales beneficios del estiramiento",\n  "tags": ["etiquetas relevantes como: mañana, oficina, post-entreno, relajación, movilidad, flexibilidad"]\n};`;
 
   try {
-    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent', {
+    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
