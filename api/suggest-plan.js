@@ -30,7 +30,7 @@ module.exports = async (req, res) => {
   const prompt = `Basándote en estos estiramientos guardados por el usuario, sugiere un plan de estiramientos organizado.\n\nEstiramientos disponibles:\n${exerciseList}\n\nCrea un plan de estiramientos coherente agrupando los ejercicios similares o complementarios.\nResponde ÚNICAMENTE con un objeto JSON válido (sin markdown, sin texto extra):\n\n{\n  \"nombre_plan\": \"nombre descriptivo del plan\",\n  \"descripcion\": \"descripción breve del plan\",\n  \"duracion_total\": \"estimación en minutos\",\n  \"nivel\": \"principiante, intermedio o avanzado\",\n  \"rutina\": [\n    {\n      \"orden\": 1,\n      \"ejercicio_index\": 0,\n      \"duracion_segundos\": 30,\n      \"repeticiones\": \"30 segundos cada lado\",\n      \"notas\": \"nota opcional\"\n    }\n  ],\n  \"consejos\": [\"consejo 1\", \"consejo 2\"]\n}\n\nEl campo ejercicio_index es el índice (base 0) del ejercicio en la lista proporcionada.`;
 
   try {
-    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent', {
+    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
